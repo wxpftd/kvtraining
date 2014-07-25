@@ -63,6 +63,9 @@ protected:
     
     bool running;
     Runnable* target;
+private:
+	pthread_t tid;
+	static void* start_thread(void *arg);
 };
 
 /**

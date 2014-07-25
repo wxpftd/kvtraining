@@ -1,5 +1,6 @@
 
 #include "threadpool.h"
+#include <iostream>
 
 namespace mmtraining {
 
@@ -11,11 +12,18 @@ Thread::Thread(Runnable& t) : running(false), target(&t) {}
 
 Thread::~Thread() {
     // TODO: 释放资源
+	pthread_exit(NULL);	
+	target = NULL;
+	running = false;
+	
 }
 
 int Thread::Start() {
     // TODO: 启动线程, 运行 Run
-    return -1;
+	if ((pthread_create(&tid, NULL, start_thread, (void*)this)) != 0)
+		return -1;
+	else
+		return 0;
 }
 
 pthread_t Thread::GetId() const {
@@ -49,6 +57,12 @@ bool Thread::IsRunning() const {
 int Thread::Join() {
     // TODO: 完成代码
     return -1;
+}
+
+void* Thread::start_thread(void *arg)
+{
+	Thread *ptr = (Thread*)arg;
+	ptr->Run();
 }
 
 /////////////////////////////////////////////////ThreadPool
