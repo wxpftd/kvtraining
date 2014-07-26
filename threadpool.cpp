@@ -1,21 +1,19 @@
-
 #include "threadpool.h"
 #include <iostream>
+#include <pthread.h>
 
 namespace mmtraining {
 
 /////////////////////////////////////////////////Thread
 
-Thread::Thread() : running(false), target(NULL) {}
+Thread::Thread() : running(false), target(NULL) {tid = -1;}
 
-Thread::Thread(Runnable& t) : running(false), target(&t) {}
+Thread::Thread(Runnable& t) : running(false), target(&t) {tid = -1;}
 
 Thread::~Thread() {
     // TODO: 释放资源
-	pthread_exit(NULL);	
 	target = NULL;
 	running = false;
-	
 }
 
 int Thread::Start() {
@@ -27,13 +25,15 @@ int Thread::Start() {
 }
 
 pthread_t Thread::GetId() const {
-    // TODO: 启动线程, 运行 Run
-    return -1;
+    // TODO:获取线程id 
+	if ((int)tid != -1)	
+		return tid;
+	else
+	    return -1;
 }
 
 int Thread::Run() {
     running = true;
-    
     // 处理逻辑
     int ret = -1;
     if (target != NULL) { // 若指定了target, 则运行target逻辑
@@ -47,6 +47,8 @@ int Thread::Run() {
 }
 
 int Thread::DoRun() {
+	std::cout << "Thread " << tid << " runs." << std::endl;
+	pthread_exit(NULL);
     return 0;
 }
 
@@ -56,13 +58,19 @@ bool Thread::IsRunning() const {
 
 int Thread::Join() {
     // TODO: 完成代码
-    return -1;
+	if (pthread_join(tid, NULL) == 0)
+	{
+		return 0;
+	}
+	else
+	    return -1;
 }
 
 void* Thread::start_thread(void *arg)
 {
 	Thread *ptr = (Thread*)arg;
 	ptr->Run();
+	return NULL;
 }
 
 /////////////////////////////////////////////////ThreadPool
