@@ -1,6 +1,7 @@
 #include "threadpool.h"
 #include <iostream>
 #include <pthread.h>
+#include <unistd.h>
 
 namespace mmtraining {
 
@@ -41,13 +42,13 @@ int Thread::Run() {
     } else { // ·ñÔòÔËÐÐ DoRun Âß¼­
         ret = this->DoRun();
     }
-    
     running = false;
     return ret;
 }
 
 int Thread::DoRun() {
-	std::cout << "Thread " << tid << " runs." << std::endl;
+	std::cout << "Thread " << tid << " is running in class Thread." << std::endl;
+	//sleep(10);
 	pthread_exit(NULL);
     return 0;
 }
@@ -69,6 +70,7 @@ int Thread::Join() {
 void* Thread::start_thread(void *arg)
 {
 	Thread *ptr = (Thread*)arg;
+	//sleep(0.01);
 	ptr->Run();
 	return NULL;
 }
