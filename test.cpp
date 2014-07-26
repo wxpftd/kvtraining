@@ -5,15 +5,11 @@
 using namespace std;
 using namespace mmtraining;
 
-void* Threadshow(void* arg)
-{
-	cerr << "Thread " << pthread_self() << " is running." << endl;
-	return NULL;
-}
 int main()
 {
-		Thread t;
-		t.Start();
-		t.Join();
+	Thread threadType;
+	ThreadPool tp;
+	tp.Start(10, threadType);
+	tp.JoinAll();
 	return 0;
 }

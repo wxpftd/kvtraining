@@ -7,9 +7,11 @@ namespace mmtraining {
 
 /////////////////////////////////////////////////Thread
 
-Thread::Thread() : running(false), target(NULL) {tid = -1;}
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
-Thread::Thread(Runnable& t) : running(false), target(&t) {tid = -1;}
+Thread::Thread() : running(false), target(NULL), tid(-1) {}
+
+Thread::Thread(Runnable& t) : running(false), target(&t), tid(-1) {}
 
 Thread::~Thread() {
     // TODO: 释放资源
@@ -37,6 +39,7 @@ int Thread::Run() {
     running = true;
     // 处理逻辑
     int ret = -1;
+	
     if (target != NULL) { // 若指定了target, 则运行target逻辑
         ret = target->Run();
     } else { // 否则运行 DoRun 逻辑
@@ -47,8 +50,10 @@ int Thread::Run() {
 }
 
 int Thread::DoRun() {
-	std::cout << "Thread " << tid << " is running in class Thread." << std::endl;
-	//sleep(10);
+	pthread_mutex_lock(&mutex);
+	std::cout << "Thread " << pthread_self() << " is running in class Thread." << std::endl;
+	pthread_mutex_unlock(&mutex);
+	//printf("Thread %d is running in the class Thread.\n", (int)pthread_self());
 	pthread_exit(NULL);
     return 0;
 }
@@ -77,20 +82,35 @@ void* Thread::start_thread(void *arg)
 
 /////////////////////////////////////////////////ThreadPool
 
-ThreadPool::ThreadPool() {}
+ThreadPool::ThreadPool()
+{
+}
 
 ThreadPool::~ThreadPool() {
     // TODO: 完成代码
+	threads.clear();
 }
 
 int ThreadPool::Start(int threadCount, Runnable& target) {
     // TODO: 完成代码
-    return -1;
+	for (int i=0; i<threadCount; i++)
+	{
+		Thread *newOneThread= new Thread(target);
+		threads.push_back(newOneThread);
+		if (newOneThread->Start() != 0)
+			return -1;
+	}
+    return 0;
 }
 
 int ThreadPool::JoinAll() {
     // TODO: 完成代码
-    return -1;
+	for(auto &oneThread : threads)
+	{
+		if (oneThread->Join() != 0)
+			return -1;	
+	}
+    return 0;
 }
 
 ///////////////////////////////////////////////WorkQueue
