@@ -7,7 +7,6 @@ namespace mmtraining {
 
 /////////////////////////////////////////////////Thread
 
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 Thread::Thread() : running(false), target(NULL), tid(-1) {}
 
@@ -50,11 +49,7 @@ int Thread::Run() {
 }
 
 int Thread::DoRun() {
-	pthread_mutex_lock(&mutex);
-	std::cout << "Thread " << pthread_self() << " is running in class Thread." << std::endl;
-	pthread_mutex_unlock(&mutex);
 	//printf("Thread %d is running in the class Thread.\n", (int)pthread_self());
-	pthread_exit(NULL);
     return 0;
 }
 
@@ -88,7 +83,6 @@ ThreadPool::ThreadPool()
 
 ThreadPool::~ThreadPool() {
     // TODO: 完成代码
-	threads.clear();
 }
 
 int ThreadPool::Start(int threadCount, Runnable& target) {
@@ -105,7 +99,7 @@ int ThreadPool::Start(int threadCount, Runnable& target) {
 
 int ThreadPool::JoinAll() {
     // TODO: 完成代码
-	for(auto &oneThread : threads)
+	for (Thread* &oneThread : threads)
 	{
 		if (oneThread->Join() != 0)
 			return -1;	
@@ -125,6 +119,8 @@ WorkQueue::~WorkQueue() {
 
 int WorkQueue::AddWork(Work* work) {
     // TODO: 完成代码
+	works.push_back(work);
+	works.pop_front();
     return -1;
 }
 

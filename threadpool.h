@@ -101,10 +101,8 @@ protected:
     typedef std::vector<Thread*> ThreadVec;
 
     ThreadVec threads;
-private:
-	pthread_mutex_t mutex;
-};
 
+};
 /**
  * 工作基类
  */
