@@ -97,6 +97,12 @@ public:
      */
     int JoinAll();
 
+	/**
+	 * 检测内部是否还有线程在运行
+	 * @return 0 成功, -1 失败
+	 */
+	int IsThreadRunning();
+
 protected:
     typedef std::vector<Thread*> ThreadVec;
 

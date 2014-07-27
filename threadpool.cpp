@@ -3,6 +3,7 @@
 #include <iostream>
 #include <pthread.h>
 #include <unistd.h>
+#include <cctype>
 
 namespace mmtraining {
 
@@ -106,6 +107,22 @@ namespace mmtraining {
 		return 0;
 	}
 
+	int ThreadPool::IsThreadRunning()
+	{
+		// TODO: 方便工作池shutdown时的线程状态检查	
+		bool allThreadFinish = true;
+		for (Thread* &oneThread : threads)
+		{
+			if (oneThread->IsRunning())	
+			{
+				allThreadFinish = false;
+				break;	
+			}
+		}
+		return allThreadFinish;
+
+	}
+
 	///////////////////////////////////////////////WorkQueue
 
 	WorkQueue::WorkQueue() : shutdown(false) {
@@ -139,15 +156,12 @@ namespace mmtraining {
 		// TODO: 完成代码
 		Work* oneWork = NULL; 
 		pthread_mutex_lock(&mutex);
-		if (!shutdown)
+		while (!shutdown && works.empty())
+			pthread_cond_wait(&cond, &mutex);
+		if (!works.empty())	
 		{
-			if (works.empty())
-				pthread_cond_wait(&cond, &mutex);
-			else
-			{
-				oneWork = works.front();
-				works.pop_front();
-			}
+			oneWork = works.front();
+			works.pop_front();
 		}
 		pthread_mutex_unlock(&mutex);
 		if (oneWork != NULL)
@@ -158,23 +172,43 @@ namespace mmtraining {
 
 	int WorkQueue::Shutdown() {
 		// TODO: 完成代码
-		printf("Shutdown Function works.\n");
-		for (int i=0; i<(int)works.size(); i++)
-		{
-			printf("Shutdown Function wakes thread.\n");
-			pthread_mutex_lock(&mutex);
-			pthread_cond_signal(&cond);
-			pthread_mutex_unlock(&mutex);
-		}
-
-		if (works.empty())
-		{
-			shutdown = true;
-			//pthread_cond_destroy(&cond);
-			return 0;
-		}
-		else
-			return -1;
+		int shutdownMask = 0;
+		//char shutdownOK;
+		shutdown = true;
+		pthread_cond_broadcast(&cond);
+		if (!works.empty())
+			shutdownMask += 2;
+		//for (Thread* oneThread : threadpool)
+		//{
+			////pthread_cond_destroy(&cond);
+			//if (oneThread->IsRunning())
+			//{
+				//printf("ThreadPool is working, will you still shut it down?(Y/N)");	
+				//scanf("%c", &shutdown);
+				//if (toupper(shutdownOK) == 'Y')
+				//{
+					//exit(-1);	
+				//}
+				//else 
+				//{
+					//bool allThreadFinish = false;
+					//while(!allThreadFinish)		
+					//{
+						//allThreadFinish = true;
+						//for (Thread* insideOneThread : threadpool)
+						//{
+							//if (insideOneThread -> IsRunning())	
+							//{
+								//allThreadFinish = false;			
+								//break;
+							//}
+						//}
+					//}
+					//shutdownMask += 1;
+				//}
+			//}
+		//}
+		return shutdownMask;
 	}
 
 	bool WorkQueue::IsShutdown() {
@@ -191,17 +225,15 @@ namespace mmtraining {
 
 	int Worker::Run() {
 		// TODO: 工作循环
-		printf("Thread %lld do this.\n", (long long)pthread_self());
-		printf("workQueue.IsShutdown() is %d\n", workQueue.IsShutdown());
+		//printf("Thread %lld do this.\n", (long long)pthread_self());
+		//printf("workQueue.IsShutdown() is %d\n", workQueue.IsShutdown());
 		while (!workQueue.IsShutdown())
 		{
 			Work* oneWork = workQueue.GetWork();
-			if (!oneWork->NeedDelete())
-			{
-				if (oneWork != NULL)
+			if (oneWork != NULL)
+				if (!oneWork->NeedDelete())
 					if(oneWork->DoWork() != 0)
 						return -1;
-			}
 		}
 		pthread_exit(NULL);
 		return 0;
