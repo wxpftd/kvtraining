@@ -21,15 +21,25 @@ public:
 	}
 };
 
+class MyRun : public Runnable
+{
+public:
+	int Run()
+	{
+		printf("MyRun is working.\n");	
+		return 0;
+	}
+		
+};
+
 int main()
 {
 	MyWork myWork;
-	WorkQueue wq;
 	WorkerThreadPool whp;
-	for (int i=0; i<50; i++)
+	for (int i=0; i<200; i++)
 		whp.AddWork(&myWork);
-	whp.Start(10);
-	//whp.JoinAll();
-	//whp.Shutdown();
+	whp.Start(5);
+	whp.Shutdown();
+	whp.JoinAll();
 	return 0;
 }

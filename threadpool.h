@@ -223,6 +223,15 @@ public:
      */
     int Start(int threadCount);
 
+
+    /**
+     * 启动线程
+     * @param threadCount 启动的线程数
+     * @return 0 成功, -1 失败
+     */
+	int Start(int threadCount, Runnable& target);
+
+
     /**
      * 添加工作，唤醒工作线程处理
      * @param work 工作
@@ -242,14 +251,6 @@ public:
     int JoinAll();
 
 protected:
-
-    /**
-     * 启动线程
-     * @param threadCount 启动的线程数
-     * @return 0 成功, -1 失败
-     */
-    int Start(int threadCount, Runnable& target);
-
     WorkQueue workQueue;
     Worker worker;
     ThreadPool pool;

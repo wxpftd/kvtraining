@@ -136,12 +136,15 @@ namespace mmtraining {
 		// TODO: 完成代码
 		Work* oneWork = NULL; 
 		pthread_mutex_lock(&mutex);
-		if (!shutdown && works.empty())
-			pthread_cond_wait(&cond, &mutex);
-		else
+		if (!shutdown)
 		{
-			oneWork = works.front();
-			works.pop_front();
+			if (works.empty())
+				pthread_cond_wait(&cond, &mutex);
+			else
+			{
+				oneWork = works.front();
+				works.pop_front();
+			}
 		}
 		pthread_mutex_unlock(&mutex);
 		if (oneWork != NULL)
@@ -153,14 +156,16 @@ namespace mmtraining {
 	int WorkQueue::Shutdown() {
 		// TODO: 完成代码
 		printf("Shutdown Function works.\n");
-		while (!works.empty())	
+		if (!works.empty())	
 		{
+			printf("Shutdown Function wakes thread.\n");
 			pthread_cond_signal(&cond);
 		}
+
 		if (works.empty())
 		{
 			shutdown = true;
-			pthread_cond_destroy(&cond);
+			//pthread_cond_destroy(&cond);
 			return 0;
 		}
 		else
@@ -181,17 +186,19 @@ namespace mmtraining {
 
 	int Worker::Run() {
 		// TODO: 工作循环
-		printf("Status of Shutdown is %d.\n", workQueue.IsShutdown());
 		printf("Thread %lld do this.\n", (long long)pthread_self());
+		printf("workQueue.IsShutdown() is %d\n", workQueue.IsShutdown());
 		while (!workQueue.IsShutdown())
 		{
-			//printf("Worker is working.\n");
 			Work* oneWork = workQueue.GetWork();
-			if (!oneWork->NeedDelete() && oneWork->DoWork() != 0)
+			if (!oneWork->NeedDelete())
 			{
-				return -1;	
+				if (oneWork != NULL)
+					if(oneWork->DoWork() != 0)
+						return -1;
 			}
 		}
+		pthread_exit(NULL);
 		return 0;
 	}
 
@@ -223,5 +230,5 @@ namespace mmtraining {
 		return pool.JoinAll();
 	}
 
-} // mmtraining
+} // mmtrainin
 
