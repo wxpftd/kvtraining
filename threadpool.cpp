@@ -1,4 +1,5 @@
 #include "threadpool.h"
+#include <sys/sem.h>
 #include <iostream>
 #include <pthread.h>
 #include <unistd.h>
@@ -127,8 +128,10 @@ namespace mmtraining {
 
 	int WorkQueue::AddWork(Work* work) {
 		// TODO: 完成代码
+		pthread_mutex_lock(&mutex);
 		works.push_back(work);
 		pthread_cond_signal(&cond);
+		pthread_mutex_unlock(&mutex);
 		return 0;
 	}
 
@@ -156,10 +159,12 @@ namespace mmtraining {
 	int WorkQueue::Shutdown() {
 		// TODO: 完成代码
 		printf("Shutdown Function works.\n");
-		if (!works.empty())	
+		for (int i=0; i<(int)works.size(); i++)
 		{
 			printf("Shutdown Function wakes thread.\n");
+			pthread_mutex_lock(&mutex);
 			pthread_cond_signal(&cond);
+			pthread_mutex_unlock(&mutex);
 		}
 
 		if (works.empty())
