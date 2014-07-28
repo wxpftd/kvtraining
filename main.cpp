@@ -36,9 +36,15 @@ int main()
 {
 	MyWork myWork;
 	WorkerThreadPool whp;
-	for (int i=0; i<1000000; i++)
-		whp.AddWork(&myWork);
+	long long workCount = 0;
+	//for (int i=0; i<1000000; i++)
 	whp.Start(100);
+	while(1)
+	{
+		whp.AddWork(&myWork);
+		workCount ++;
+		cout << workCount << endl;
+	}
 	cout << whp.Shutdown() << endl;
 	whp.JoinAll();
 	return 0;
