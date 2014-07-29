@@ -103,6 +103,7 @@ namespace mmtraining {
 		{
 			if (oneThread->Join() != 0)
 				return -1;	
+			delete oneThread;
 		}
 		return 0;
 	}
@@ -208,6 +209,7 @@ namespace mmtraining {
 				//}
 			//}
 		//}
+		
 		return shutdownMask;
 	}
 
@@ -217,7 +219,13 @@ namespace mmtraining {
 
 	/////////////////////////////////////////////////Worker
 
-	Worker::Worker(WorkQueue& queue) : workQueue(queue) {}
+	Worker::Worker(WorkQueue& queue) : workQueue(queue) {
+		if (pthread_mutex_init(&mutex, NULL) == -1)	
+		{
+			printf("pthread_mutex_init failed.\n");	
+			exit(-1);
+		}
+	}
 
 	Worker::~Worker() {
 		// TODO: 释放资源
@@ -229,11 +237,17 @@ namespace mmtraining {
 		//printf("workQueue.IsShutdown() is %d\n", workQueue.IsShutdown());
 		while (!workQueue.IsShutdown())
 		{
+			pthread_mutex_lock(&mutex);
 			Work* oneWork = workQueue.GetWork();
 			if (oneWork != NULL)
 				if (!oneWork->NeedDelete())
+				{
+					//这里应该设置位不可重入的
 					if(oneWork->DoWork() != 0)
 						return -1;
+					delete oneWork;
+				}
+			pthread_mutex_unlock(&mutex);
 		}
 		pthread_exit(NULL);
 		return 0;

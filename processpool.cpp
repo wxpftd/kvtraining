@@ -144,6 +144,7 @@ int ProcessPool::WaitAll() {
 	{
 		if (oneProcess->Wait() == -1)	
 			return -1;
+		delete oneProcess;
 	}
 	return 0;
 }
@@ -175,7 +176,6 @@ Processor::~Processor() {
 }
 
 int Processor::Run() {
- 
     return -1;
 }
 

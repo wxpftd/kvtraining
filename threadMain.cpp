@@ -9,6 +9,15 @@ using namespace mmtraining;
 class MyWork : public Work
 {
 public:
+	double *testArea; 
+	MyWork()
+	{
+		testArea = new double[10000];
+	}
+	~MyWork()
+	{
+		delete testArea;	
+	}
 	bool NeedDelete() const
 	{
 		return false;	
@@ -35,14 +44,14 @@ public:
 
 int main()
 {
-	MyWork myWork;
 	WorkerThreadPool whp;
 	long long workCount = 0;
-	//for (int i=0; i<1000000; i++)
 	whp.Start(100);
 	while(1)
+	//for (int i=0; i<100000; i++)
 	{
-		whp.AddWork(&myWork);
+		MyWork *myWork = new MyWork();
+		whp.AddWork(myWork);
 		workCount ++;
 		cout << workCount << endl;
 	}

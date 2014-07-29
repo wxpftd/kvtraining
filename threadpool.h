@@ -202,7 +202,7 @@ public:
     int Run();
     
 private:
-    
+	pthread_mutex_t mutex;
     WorkQueue& workQueue;
 };
 
