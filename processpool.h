@@ -3,6 +3,7 @@
 #define MM_TRAINING_PROCESS_POOL_H
 
 #include <string>
+#include <vector>
 #include "runnable.h"
 
 namespace mmtraining {
@@ -60,9 +61,13 @@ protected:
     /**
      * 进程处理逻辑
      */
-    virtual int DoRun() = 0;
+    virtual int DoRun();
     
     Runnable* target;
+
+private:
+	int processStatus;
+	pid_t pid;
 };
 
 /**
@@ -95,6 +100,12 @@ public:
      * @return 0 成功, -1 失败
      */
     int WaitAll();
+private:
+    typedef std::vector<Process*> ProcessVec;
+
+    ProcessVec processes;
+
+
 };
 
 /**
