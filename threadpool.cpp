@@ -242,7 +242,6 @@ namespace mmtraining {
 			if (oneWork != NULL)
 				if (!oneWork->NeedDelete())
 				{
-					//这里应该设置位不可重入的
 					if(oneWork->DoWork() != 0)
 						return -1;
 					delete oneWork;
