@@ -3,6 +3,8 @@
 #define MM_TRAINING_PROCESS_POOL_H
 
 #include <string>
+#include <deque>
+#include <semaphore.h>
 #include <vector>
 #include "runnable.h"
 
@@ -161,6 +163,12 @@ public:
      * @return 0: ³É¹¦, -1: Ê§°Ü
      */
     int GetTask(Task& task);
+
+private:
+	sem_t sem;
+	typename deque<Task*> Queue;
+	Queue tasks;
+	std::string buffer;
 };
 
 /**

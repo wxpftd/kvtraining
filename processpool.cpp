@@ -152,19 +152,42 @@ int ProcessPool::WaitAll() {
 /////////////////////////////////////////////////TaskQueue
 
 TaskQueue::TaskQueue() {
+	if (0 != sem_init(&sem))
+	{
+		printf("sem_init failed.\n");	
+		exit(-1);
+	}
 }
     
 TaskQueue::~TaskQueue() {
 }
     
 int TaskQueue::AddTask(Task& task) {
- 
-    return -1;
+	int funcRet = 0;
+
+	funcRet = tasks.push_back(&task);				
+	funcRet = task.ToBuffer(buffer);
+	sem_post(&sem);
+
+	if (0 == funcRet)
+	    return 0;
+	else
+		return -1;
 }
     
 int TaskQueue::GetTask(Task& task) {
- 
-    return -1;
+	int funcRet = 0;
+	while(tasks.empty()) 
+		sem.wait(&sem);
+	if (!tasks.empty())
+	{
+		funcRet = task = tasks.front();
+		funcRet = task.pop_front();
+	}
+	if (0 == funcRet)
+		return 0;
+	else
+		return -1;
 }
 
 /////////////////////////////////////////////////Processor
