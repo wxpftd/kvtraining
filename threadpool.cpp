@@ -239,6 +239,7 @@ namespace mmtraining {
 		{
 			pthread_mutex_lock(&mutex);
 			Work* oneWork = workQueue.GetWork();
+			pthread_mutex_unlock(&mutex);
 			if (oneWork != NULL)
 				if (!oneWork->NeedDelete())
 				{
@@ -246,7 +247,6 @@ namespace mmtraining {
 						return -1;
 					delete oneWork;
 				}
-			pthread_mutex_unlock(&mutex);
 		}
 		pthread_exit(NULL);
 		return 0;
