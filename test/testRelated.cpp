@@ -12,7 +12,7 @@ using namespace std;
 class People
 {
 public:
-	string name;
+	char name[4];
 	int age;
 };
 
@@ -24,8 +24,8 @@ int main(int argc, char *argv[])
 	p_map = (People*)mmap(NULL, sizeof(People)*10, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
 	for (i=0;i<10;i++)
 	{
-		//printf("Name: %s age %d;\n", (*(p_map+i)).name.c_str(), (*(p_map+i)).age);	
-		cout << "Name: " << (*(p_map+i)).name << "age: " << (*(p_map+i)).age << endl;
+		printf("Name: %s,age %d;\n", (*(p_map+i)).name, (*(p_map+i)).age);	
+		//cout << "Name: " << (*(p_map+i)).name << "age: " << (*(p_map+i)).age << endl;
 	}
 	munmap(p_map, sizeof(People)*10);
 }
