@@ -244,9 +244,17 @@ namespace mmtraining {
 				if (!oneWork->NeedDelete())
 				{
 					if(oneWork->DoWork() != 0)
+					{
+						// Dowork fails.
+						delete oneWork;
 						return -1;
-					delete oneWork;
+					}
+					else
+						// Dowork successful.
+						delete oneWork;
 				}
+				else
+					delete oneWork;
 		}
 		pthread_exit(NULL);
 		return 0;

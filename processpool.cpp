@@ -1,3 +1,5 @@
+#include <sys/mman.h>
+#include <sys/types.h>
 #include <sys/wait.h>
 #include <errno.h>
 #include <unistd.h>
@@ -170,7 +172,7 @@ int TaskQueue::AddTask(Task& task) {
 	sem_post(&sem);
 
 	if (0 == funcRet)
-	    return 0;
+		return 0;
 	else
 		return -1;
 }
