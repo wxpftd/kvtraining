@@ -1,9 +1,11 @@
+#include <sstream>
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <errno.h>
 #include <unistd.h>
 #include "processpool.h"
+#include <semaphore.h>
 
 namespace mmtraining {
 
@@ -154,54 +156,127 @@ int ProcessPool::WaitAll() {
 /////////////////////////////////////////////////TaskQueue
 
 TaskQueue::TaskQueue() {
-	if (0 != sem_init(&sem))
+	if (0 != sem_init(&sem, 0, 0))
 	{
 		printf("sem_init failed.\n");	
+		exit(-1);
+	}
+	p_mutex = (pthread_mutex_t*)mmap(NULL, sizeof(pthread_mutex_t), PROT_WRITE|PROT_READ, MAP_SHARED|MAP_ANONYMOUS, -1, 0);	
+	if (MAP_FAILED == p_mutex)
+	{
+		printf("mmap init failed.\n");	
+		exit(-1);
+	}
+	if (0 != pthread_mutexattr_init(&attr))
+	{
+		printf("pthread_mutexattr_init() failed.\n");	
+		exit(-1);
+	}
+	if (0 != pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED))
+	{
+		printf("pthread_mutexattr_setpshared() failed.\n");	
+		exit(-1);
+	}
+	if (0 != pthread_mutex_init(p_mutex, &attr)) 
+	{
+		printf("pthread_mutex_init() failed.\n");	
 		exit(-1);
 	}
 }
     
 TaskQueue::~TaskQueue() {
+	pthread_mutexattr_destroy(&attr);
+	pthread_mutex_destroy(p_mutex);
 }
     
 int TaskQueue::AddTask(Task& task) {
-	int funcRet = 0;
-
-	funcRet = tasks.push_back(&task);				
-	funcRet = task.ToBuffer(buffer);
+	int ret = 0;
+	std::string buffer;
+	pthread_mutex_lock(p_mutex);
+	tasks.push_back(&task);				
+	ret = task.ToBuffer(buffer);
+	if (0 != ret)
+	{
+		printf("ToBuffer() failed.\n");	
+		return -1;
+	}
+	buffers.push_back(buffer);
+	pthread_mutex_unlock(p_mutex);
 	sem_post(&sem);
-
-	if (0 == funcRet)
+	printf("AddTask().\n");
+	if (0 == ret)
 		return 0;
 	else
 		return -1;
 }
     
 int TaskQueue::GetTask(Task& task) {
-	int funcRet = 0;
+	std::string buffer;
+	int ret = 0;
 	while(tasks.empty()) 
-		sem.wait(&sem);
+	{
+		printf("GetTask().\n");
+		sem_wait(&sem);
+	}
+	pthread_mutex_lock(p_mutex);
 	if (!tasks.empty())
 	{
-		funcRet = task = tasks.front();
-		funcRet = task.pop_front();
+		task = *(tasks.front());
+		tasks.pop_front();
+		buffer = buffers.front();
+		buffers.pop_front();
+		task.FromBuffer(buffer);
 	}
-	if (0 == funcRet)
+	pthread_mutex_unlock(p_mutex);
+	if (0 == ret)
 		return 0;
 	else
 		return -1;
 }
 
+int TaskQueue::ToBuffer(std::string &buffer)
+{
+	std::stringstream ss(buffer);	
+	boost::archive::text_oarchive oa(ss);
+	oa << (*this);
+	return 0;
+	return -1;	
+}
+
+int TaskQueue::FromBuffer(std::string &buffer)
+{
+	std::stringstream ss(buffer);
+	boost::archive::text_iarchive ia(ss);
+	ia >> (*this);
+	return 0;
+	return -1;		
+}
 /////////////////////////////////////////////////Processor
 
 Processor::Processor(TaskQueue& queue, Task& tt) : taskQueue(queue), taskType(tt) {}
 
 Processor::~Processor() {
- 
+	 
 }
 
 int Processor::Run() {
-    return -1;
+	while (1)
+	{
+		//printf("Processor::Run.\n");
+		if (0 == taskQueue.GetTask(taskType))			
+		{
+			if (taskType.DoTask() != 0)
+			{
+				return -1;	
+			}
+
+		}
+		else
+		{ 
+			return -1;
+		}
+	}
+    return 0;
 }
 
 /////////////////////////////////////////////////TaskProcessPool

@@ -7,6 +7,10 @@
 #include <semaphore.h>
 #include <vector>
 #include "runnable.h"
+#include <pthread.h>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/serialization/deque.hpp>
 
 namespace mmtraining {
 
@@ -164,11 +168,35 @@ public:
      */
     int GetTask(Task& task);
 
+	/**
+	 * 序列化
+	 * @return 0: 成功, -1: 失败
+	 */
+	int ToBuffer(std::string &buffer);
+
+	/**
+	 * 反序列化
+	 * @return 0: 成功, -1: 失败
+	 */
+	int FromBuffer(std::string &buffer);
+
 private:
+	pthread_mutexattr_t attr;
+	pthread_mutex_t *p_mutex;
 	sem_t sem;
-	typename deque<Task*> Queue;
+	typedef std::deque<Task*> Queue;
 	Queue tasks;
-	std::string buffer;
+	std::deque<std::string> buffers;
+	friend class boost::serialization::access;
+	template<typename Archive>
+	void serialize(Archive &ar, const unsigned int version)
+	{
+		ar & attr;
+		ar & p_mutex;
+		ar & sem;
+		ar & tasks;
+		ar & buffers;
+	}
 };
 
 /**
@@ -194,7 +222,7 @@ public:
     int Run();
     
 private:
-    
+	std::string buffer;    
     TaskQueue& taskQueue;
     Task& taskType;
 };
