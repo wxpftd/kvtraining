@@ -184,19 +184,6 @@ private:
 	pthread_mutexattr_t attr;
 	pthread_mutex_t *p_mutex;
 	sem_t sem;
-	typedef std::deque<Task*> Queue;
-	Queue tasks;
-	std::deque<std::string> buffers;
-	friend class boost::serialization::access;
-	template<typename Archive>
-	void serialize(Archive &ar, const unsigned int version)
-	{
-		ar & attr;
-		ar & p_mutex;
-		ar & sem;
-		ar & tasks;
-		ar & buffers;
-	}
 };
 
 /**
@@ -222,7 +209,6 @@ public:
     int Run();
     
 private:
-	std::string buffer;    
     TaskQueue& taskQueue;
     Task& taskType;
 };

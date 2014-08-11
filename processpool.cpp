@@ -234,23 +234,6 @@ int TaskQueue::GetTask(Task& task) {
 		return -1;
 }
 
-int TaskQueue::ToBuffer(std::string &buffer)
-{
-	std::stringstream ss(buffer);	
-	boost::archive::text_oarchive oa(ss);
-	oa << (*this);
-	return 0;
-	return -1;	
-}
-
-int TaskQueue::FromBuffer(std::string &buffer)
-{
-	std::stringstream ss(buffer);
-	boost::archive::text_iarchive ia(ss);
-	ia >> (*this);
-	return 0;
-	return -1;		
-}
 /////////////////////////////////////////////////Processor
 
 Processor::Processor(TaskQueue& queue, Task& tt) : taskQueue(queue), taskType(tt) {}
@@ -260,23 +243,8 @@ Processor::~Processor() {
 }
 
 int Processor::Run() {
-	while (1)
-	{
-		//printf("Processor::Run.\n");
-		if (0 == taskQueue.GetTask(taskType))			
-		{
-			if (taskType.DoTask() != 0)
-			{
-				return -1;	
-			}
-
-		}
-		else
-		{ 
-			return -1;
-		}
-	}
-    return 0;
+	
+    return -1;
 }
 
 /////////////////////////////////////////////////TaskProcessPool
