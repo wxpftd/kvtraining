@@ -7,6 +7,8 @@
 #include <semaphore.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <error.h>
+#include <fcntl.h>
 
 class CharQueue 
 {
@@ -19,8 +21,6 @@ public:
 
 private:
 	key_t space_shmkey;
-	key_t mutex_shmkey_push;
-	key_t mutex_shmkey_pop;
 	char* queueSpace;
 	long long head;
 	long long tail;
@@ -28,12 +28,10 @@ private:
 	int tag;
 	
 
-	pthread_mutexattr_t q_attr_push;
-	pthread_mutexattr_t q_attr_pop;
-	pthread_mutex_t *q_mutex_push;
-	pthread_mutex_t *q_mutex_pop;
-	sem_t q_sem_full;	
-	sem_t q_sem_empty;	
+	sem_t sem_full;	
+	sem_t sem_empty;	
+	sem_t *sem_mutex_w;
+	sem_t sem_mutex_r;
 };
 
 #endif
