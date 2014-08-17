@@ -1,6 +1,6 @@
 #ifndef __charqueue__
 #define __charqueue__
-#define MAX_CHARQUEUE 1000000
+#define MAX_CHARQUEUE 10000
 
 #include <sys/shm.h>
 #include <unistd.h>
@@ -19,7 +19,8 @@ public:
 
 private:
 	key_t space_shmkey;
-	key_t mutex_shmkey;
+	key_t mutex_shmkey_push;
+	key_t mutex_shmkey_pop;
 	char* queueSpace;
 	long long head;
 	long long tail;
@@ -27,8 +28,10 @@ private:
 	int tag;
 	
 
-	pthread_mutexattr_t q_attr;
-	pthread_mutex_t *q_mutex;
+	pthread_mutexattr_t q_attr_push;
+	pthread_mutexattr_t q_attr_pop;
+	pthread_mutex_t *q_mutex_push;
+	pthread_mutex_t *q_mutex_pop;
 	sem_t q_sem_full;	
 	sem_t q_sem_empty;	
 };
