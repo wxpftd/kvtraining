@@ -31,12 +31,12 @@ int main()
 	}
 	else if (pid == 0)
 	{
-		//while (1)
-		//{
-		//	cout << "pid is " << pid << endl;
-		//	charqueue->pop(buffer);
-		//	cout << buffer << endl;
-		//}
+		while (1)
+		{
+			cout << "pid is " << pid << endl;
+			charqueue->pop(buffer);
+			//cout << buffer << endl;
+		}
 	}
 
 	return 0;

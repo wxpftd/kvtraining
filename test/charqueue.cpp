@@ -58,7 +58,7 @@ int CharQueue::init()
 		std::cerr << "sem_empty fail : " << strerror(errno) << std::endl;
 		exit(-1);
 	}
-	if ((space_shmkey = shmget(IPC_PRIVATE, sizeof(char)*MAX_CHARQUEUE, IPC_CREAT)) == -1)
+	if ((space_shmkey = shmget(IPC_PRIVATE, sizeof(CharSeries)*MAX_CHARQUEUE, IPC_CREAT)) == -1)
 	{
 		std::cerr << "space_shmkey's shmget failed." << std::endl;
 	}
@@ -91,35 +91,21 @@ int CharQueue::push(char* buffer)
 	//int value_mutex_w = 0;
 	//std::cout << "sem_getvalue is " << sem_getvalue(sem_mutex_w, &value_mutex_w) << std::endl;
 	//std::cout << "value_mutex_w is " << (value_mutex_w) << std::endl;
-	int length = strlen(buffer);
-	queueSpace = (char*)shmat(space_shmkey, NULL, 0);
+	queueSpace = (CharSeries*)shmat(space_shmkey, NULL, 0);
 	sem_wait(sem_mutex_w);
 	//std::cout << "push" << std::endl;
-	if (tail > head)
-	{
-	//	std::cout << "tail > head" << std::endl;
-		if (head+size-tail < length+1) 	
-		{
-			tag = 1;
-		}
-	}
-	else if (tail < head)
-	{
-	//	std::cout << "tail < head" << std::endl;
-		if (head-tail < length+1)	
-			tag = 1;
-	}
+	
 	//std::cout << "tag is " << tag << std::endl;
 	while (tag!=0)
 	{
-		printf("sem_wait(&sem_full)\n");	
+		std::cout << "sem_wait(sem_empty)" << std::endl;	
 		sem_wait(sem_empty);
 	}
-	strcpy(queueSpace+head, buffer);
-	tail = (length+1+tail) % size;
+	queueSpace[tail].putSeries(buffer);
+	tail = (tail + 1) % size;	
 	if (tail == head)
 		tag = 1;
-	std::cout << "head is " << head << std::endl << "tail is " << tail << std::endl;
+	std::cout << "head is " << head << std::endl << "tail is " << tail << std::endl << "tag is " << tag << std::endl << std::endl;
 	sem_post(sem_mutex_w);
 	sem_post(sem_full);
 	return 0;
@@ -128,16 +114,19 @@ int CharQueue::push(char* buffer)
 
 int CharQueue::pop(char* buffer)
 {
-	queueSpace = (char*)shmat(space_shmkey, NULL, 0);
+	queueSpace = (CharSeries*)shmat(space_shmkey, NULL, 0);
 	sem_wait(sem_mutex_r);
 	//std::cout << "pop" << std::endl;
-	//std::cout << "tag is " << tag << "head is " << head << "tail is " << tail << std::endl;
+	
 	while (tag == 0 && head == tail)
+	{
+		std::cout << "sem_wait(sem_full)" << std::endl;	
 		sem_wait(sem_full);
-	//strcpy(buffer, queueSpace+head);
-	head = (strlen(buffer) + 1 + head) % size;
+	}
+	queueSpace[head].getSeries(buffer);
+	head = (1 + head) % size;
 	tag = 0;
-	//std::cout << "head is " << head << "tail is " << tail << std::endl;
+	std::cout << "head is " << head << std::endl << "tail is " << tail << std::endl << std::endl;
 	sem_post(sem_mutex_r);
 	sem_post(sem_empty);
 	return 0;
@@ -151,4 +140,33 @@ int CharQueue::clear()
 	return 0;
 	return -1;
 }
+
+CharSeries::CharSeries()
+{
+
+}
+
+CharSeries::CharSeries(char* buffer)
+{
+	putSeries(buffer);
+}
+
+CharSeries::~CharSeries()
+{
+}
+
+int CharSeries::getSeries(char* buffer)
+{
+	strcpy(seriesSpace, buffer);
+	return 0;
+	return -1;
+}
+
+int CharSeries::putSeries(char* buffer)
+{
+	strcpy(buffer, seriesSpace);
+	return 0;
+	return -1;
+}
+
 

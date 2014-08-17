@@ -1,6 +1,13 @@
-#ifndef __charqueue__
-#define __charqueue__
-#define MAX_CHARQUEUE 10000
+#ifndef __CHARQUEUE_H__
+#define __CHARQUEUE_H__
+
+#ifndef MAX_CHARQUEUE
+#define MAX_CHARQUEUE 100
+#endif
+
+#ifndef MAX_CharSeries 
+#define MAX_CharSeries 100
+#endif
 
 #include <sys/shm.h>
 #include <unistd.h>
@@ -10,6 +17,20 @@
 #include <error.h>
 #include <errno.h>
 #include <fcntl.h>
+
+class CharSeries
+{
+public:
+	CharSeries();
+	~CharSeries();
+	CharSeries(char*);
+	int getSeries(char*);
+	int putSeries(char*);
+	
+private:
+	char seriesSpace[MAX_CharSeries]; 
+};
+
 
 class CharQueue 
 {
@@ -24,7 +45,7 @@ public:
 
 private:
 	key_t space_shmkey;
-	char* queueSpace;
+	CharSeries* queueSpace;
 	int head;
 	int tail;
 	int size;
