@@ -12,38 +12,44 @@ CharQueue::CharQueue():head(0), tail(0), size(MAX_CHARQUEUE), tag(0)
 
 CharQueue::~CharQueue()
 {
-	destroy();
+	//destroy();
 }
 
 int CharQueue::init()
 {
-	sem_close(sem_mutex_w);
-	sem_close(sem_mutex_r);
+	sem_close(sem_mutex);
 	sem_close(sem_empty);
 	sem_close(sem_full);
 	sem_unlink("/sem_full");
 	sem_unlink("/sem_empty");
-	sem_unlink("/mutex_w");
-	sem_unlink("/mutex_r");
+	sem_unlink("/mutex");
 
 	head = 0;
 	tail = 0;
 	size = MAX_CHARQUEUE;
 	tag = 0;
 
-	sem_mutex_w = sem_open("/mutex_w", O_CREAT, 0644, 1); 
-	if (sem_mutex_w == SEM_FAILED || errno == EEXIST)
+	//sem_mutex_w = sem_open("/mutex_w", O_CREAT, 0644, 1); 
+	//if (sem_mutex_w == SEM_FAILED || errno == EEXIST)
+	//{
+		//std::cerr << "sem_mutex_w fail : " << strerror(errno) << std::endl;
+		//exit(-1);
+	//}
+//
+	//sem_mutex_r = sem_open("/mutex_r", O_CREAT, 0644, 1); 
+	//if (sem_mutex_r == SEM_FAILED || errno == EEXIST)
+	//{
+		//std::cerr << "sem_mutex_r fail : " << strerror(errno) << std::endl;
+		//exit(-1);
+	//}
+	
+	sem_mutex = sem_open("/mutex", O_CREAT, 0644, 1); 
+	if (sem_mutex == SEM_FAILED || errno == EEXIST)
 	{
-		std::cerr << "sem_mutex_w fail : " << strerror(errno) << std::endl;
+		std::cerr << "sem_mutex fail : " << strerror(errno) << std::endl;
 		exit(-1);
 	}
 
-	sem_mutex_r = sem_open("/mutex_r", O_CREAT, 0644, 1); 
-	if (sem_mutex_r == SEM_FAILED || errno == EEXIST)
-	{
-		std::cerr << "sem_mutex_r fail : " << strerror(errno) << std::endl;
-		exit(-1);
-	}
 
 	sem_full = sem_open("/sem_full", O_CREAT, 0644, 0); 
 	if (sem_full == SEM_FAILED || errno == EEXIST)
@@ -73,14 +79,12 @@ int CharQueue::init()
 int CharQueue::destroy()
 {
 	shmctl(space_shmkey, IPC_RMID, 0);
-	sem_close(sem_mutex_w);
-	sem_close(sem_mutex_r);
+	sem_close(sem_mutex);
 	sem_close(sem_empty);
 	sem_close(sem_full);
 	sem_unlink("/sem_full");
 	sem_unlink("/sem_empty");
-	sem_unlink("/mutex_w");
-	sem_unlink("/mutex_r");
+	sem_unlink("/mutex");
 
 	return 0;
 
@@ -91,22 +95,20 @@ int CharQueue::push(char* buffer)
 	//int value_mutex_w = 0;
 	//std::cout << "sem_getvalue is " << sem_getvalue(sem_mutex_w, &value_mutex_w) << std::endl;
 	//std::cout << "value_mutex_w is " << (value_mutex_w) << std::endl;
-	queueSpace = (CharSeries*)shmat(space_shmkey, NULL, 0);
-	sem_wait(sem_mutex_w);
-	//std::cout << "push" << std::endl;
-	
-	//std::cout << "tag is " << tag << std::endl;
-	while (tag!=0)
+	while (tag!=0 && head==tail)
 	{
 		std::cout << "sem_wait(sem_empty)" << std::endl;	
 		sem_wait(sem_empty);
 	}
+	sem_wait(sem_mutex);
+	printf("push\n");
+	printf("head is %d, tail is %d, tag is %d\n", head, tail, tag);
+	queueSpace = (CharSeries*)shmat(space_shmkey, NULL, 0);
 	queueSpace[tail].putSeries(buffer);
 	tail = (tail + 1) % size;	
 	if (tail == head)
 		tag = 1;
-	std::cout << "head is " << head << std::endl << "tail is " << tail << std::endl << "tag is " << tag << std::endl << std::endl;
-	sem_post(sem_mutex_w);
+	sem_post(sem_mutex);
 	sem_post(sem_full);
 	return 0;
 	return -1;
@@ -114,20 +116,24 @@ int CharQueue::push(char* buffer)
 
 int CharQueue::pop(char* buffer)
 {
-	queueSpace = (CharSeries*)shmat(space_shmkey, NULL, 0);
-	sem_wait(sem_mutex_r);
-	//std::cout << "pop" << std::endl;
-	
-	while (tag == 0 && head == tail)
+	//printf("pop\n");
+	//int value_mutex_r = 0;
+	//std::cout << "sem_getvalue is " << sem_getvalue(sem_mutex_r, &value_mutex_r) << std::endl;
+	//std::cout << "value_mutex_r is " << (value_mutex_r) << std::endl;
+
+	while (tag==0 && head==tail)
 	{
 		std::cout << "sem_wait(sem_full)" << std::endl;	
 		sem_wait(sem_full);
 	}
+	sem_wait(sem_mutex);
+	printf("pop\n");
+	printf("head is %d, tail is %d, tag is %d\n", head, tail, tag);
+	queueSpace = (CharSeries*)shmat(space_shmkey, NULL, 0);
 	queueSpace[head].getSeries(buffer);
 	head = (1 + head) % size;
 	tag = 0;
-	std::cout << "head is " << head << std::endl << "tail is " << tail << std::endl << std::endl;
-	sem_post(sem_mutex_r);
+	sem_post(sem_mutex);
 	sem_post(sem_empty);
 	return 0;
 	return -1;
@@ -157,6 +163,11 @@ CharSeries::~CharSeries()
 
 int CharSeries::getSeries(char* buffer)
 {
+	//int seriesLenght = strlen(seriesSpace);
+	//for (int pos = 0; pos <=seriesLenght ; pos++)
+	//{
+	//	buffer[0] = (*(seriesSpace + pos));		
+	//}
 	strcpy(seriesSpace, buffer);
 	return 0;
 	return -1;
@@ -164,6 +175,11 @@ int CharSeries::getSeries(char* buffer)
 
 int CharSeries::putSeries(char* buffer)
 {
+	//int bufferLenght = strlen(buffer);
+	//for (int pos = 0; pos <=bufferLenght ; pos++)
+	//{
+	//	seriesSpace[0] = (*(buffer + pos));		
+	//}
 	strcpy(buffer, seriesSpace);
 	return 0;
 	return -1;

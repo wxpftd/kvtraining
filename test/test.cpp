@@ -23,20 +23,26 @@ int main()
 	
 	if (pid > 0)	
 	{
+		//for (int i=0; i<1000000; i++)
 		while(1)
 		{
-			cout << "pid is " << pid << endl;
+			//cout << "pid is " << pid << endl;
 			charqueue->push(buffer);
+			fflush(stdout);
 		}
+		waitpid(pid, 0, 0);
+		//charqueue->destroy();
 	}
 	else if (pid == 0)
 	{
-		while (1)
+		//for (int i=0; i<100; i++)
+		while(1)
 		{
-			cout << "pid is " << pid << endl;
 			charqueue->pop(buffer);
 			//cout << buffer << endl;
+			fflush(stdout);
 		}
+		exit(0);
 	}
 
 	return 0;

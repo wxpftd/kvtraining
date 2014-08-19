@@ -6,7 +6,7 @@
 #endif
 
 #ifndef MAX_CharSeries 
-#define MAX_CharSeries 100
+#define MAX_CharSeries 1000 
 #endif
 
 #include <sys/shm.h>
@@ -53,8 +53,9 @@ private:
 
 	sem_t *sem_full;	
 	sem_t *sem_empty;	
-	sem_t *sem_mutex_w;
-	sem_t *sem_mutex_r;
+	//sem_t *sem_mutex_w;
+	//sem_t *sem_mutex_r;
+	sem_t *sem_mutex;
 };
 
 #endif
