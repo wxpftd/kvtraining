@@ -1,3 +1,4 @@
+#include <fcntl.h>
 #include <iostream>
 #include <cstdio>
 #include <cstring>
@@ -64,13 +65,33 @@ int CharQueue::init()
 		std::cerr << "sem_empty fail : " << strerror(errno) << std::endl;
 		exit(-1);
 	}
-	if ((space_shmkey = shmget(IPC_PRIVATE, sizeof(CharSeries)*MAX_CHARQUEUE, IPC_CREAT)) == -1)
+	space_shmkey = shmget(IPC_PRIVATE, sizeof(CharSeries)*MAX_CHARQUEUE, IPC_CREAT|SHM_EXEC);
+	if (space_shmkey == -1)
 	{
-		std::cerr << "space_shmkey's shmget failed." << std::endl;
+		std::cerr << "space_shmkey init failed:" << strerror(errno)  << std::endl;
+		exit(-1);	
 	}
-	//int value_mutex_w = 0;
-	//sem_getvalue(sem_mutex_w, &value_mutex_w);
-	//std::cout << "value_mutex_w is " << (value_mutex_w) << std::endl;
+
+	//key_t key;
+	//int fd;
+	//fd = open("/tmp/shm", O_RDWR|O_CREAT, 0644);
+	//if (fd == -1)
+	//{	
+		//std::cerr << "open failed:"  << strerror(errno) << std::endl;
+		//exit(-1);
+	//}
+	//key = ftok("/tmp/shm", 0);
+	//if (key == -1)
+	//{
+		//std::cerr << "ftok failed:"  << strerror(errno) << std::endl;
+		//exit(-1);
+	//}
+	//space_shmkey = shmget(key, sizeof(charseries)*max_charqueue, ipc_creat);
+	//if (space_shmkey == -1)
+	//{
+		//std::cerr << "space_shmkey init failed:" << strerror(errno)  << std::endl;
+		//exit(-1);	
+	//}
 
 	return 0;
 
@@ -103,8 +124,10 @@ int CharQueue::push(char* buffer)
 	sem_wait(sem_mutex);
 	printf("push\n");
 	printf("head is %d, tail is %d, tag is %d\n", head, tail, tag);
-	queueSpace = (CharSeries*)shmat(space_shmkey, NULL, 0);
-	queueSpace[tail].putSeries(buffer);
+	CharSeries *oneSeries = (CharSeries*)shmat(space_shmkey, NULL, 0);
+	oneSeries[tail].putSeries(buffer);
+	shmdt(oneSeries);
+	//queueSpace[tail].putSeries(buffer);
 	tail = (tail + 1) % size;	
 	if (tail == head)
 		tag = 1;
@@ -129,8 +152,10 @@ int CharQueue::pop(char* buffer)
 	sem_wait(sem_mutex);
 	printf("pop\n");
 	printf("head is %d, tail is %d, tag is %d\n", head, tail, tag);
-	queueSpace = (CharSeries*)shmat(space_shmkey, NULL, 0);
-	queueSpace[head].getSeries(buffer);
+	CharSeries *oneSeries = (CharSeries*)shmat(space_shmkey, NULL, 0);
+	oneSeries[head].getSeries(buffer);
+	shmdt(oneSeries);
+	//queueSpace[head].getSeries(buffer);
 	head = (1 + head) % size;
 	tag = 0;
 	sem_post(sem_mutex);

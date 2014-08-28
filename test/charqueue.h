@@ -2,7 +2,7 @@
 #define __CHARQUEUE_H__
 
 #ifndef MAX_CHARQUEUE
-#define MAX_CHARQUEUE 100
+#define MAX_CHARQUEUE 1000
 #endif
 
 #ifndef MAX_CharSeries 
@@ -44,8 +44,9 @@ public:
 	int clear(); 
 
 private:
-	key_t space_shmkey;
-	CharSeries* queueSpace;
+	//CharSeries queueSpace[MAX_CHARQUEUE];
+	int space_shmkey;
+	
 	int head;
 	int tail;
 	int size;
