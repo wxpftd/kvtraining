@@ -11,6 +11,7 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/serialization/deque.hpp>
+#include "charqueue.h"
 
 namespace mmtraining {
 
@@ -155,7 +156,17 @@ public:
      * 析构函数
      */
     ~TaskQueue();
-    
+
+	/**
+	 * 任务队列初始化
+	 */
+	int init();
+
+    /**
+	 * 任务队列销毁
+	 */
+	int destroy();
+
     /**
      * 添加任务, 并唤醒一个进程处理
      * @return 0: 成功, -1: 失败
@@ -168,22 +179,8 @@ public:
      */
     int GetTask(Task& task);
 
-	/**
-	 * 序列化
-	 * @return 0: 成功, -1: 失败
-	 */
-	int ToBuffer(std::string &buffer);
-
-	/**
-	 * 反序列化
-	 * @return 0: 成功, -1: 失败
-	 */
-	int FromBuffer(std::string &buffer);
-
 private:
-	pthread_mutexattr_t attr;
-	pthread_mutex_t *p_mutex;
-	sem_t sem;
+	CharQueue *tasks;
 };
 
 /**
@@ -202,6 +199,16 @@ public:
      * 析构函数
      */
     ~Processor();
+
+	/**
+	 * 初始化
+	 */
+	int init();
+
+	/**
+	 * 销毁对象
+	 */
+	int destroy();
 
 	/**
      * 处理逻辑, 从任务队列中取出工作并处理
@@ -227,6 +234,16 @@ public:
      * 析构函数
      */
     ~TaskProcessPool();
+
+	/**
+	 * 初始化
+	 */
+	int init();
+
+	/**
+	 * 销毁对象
+	 */
+	int destroy();
 
     /**
      * 启动进程

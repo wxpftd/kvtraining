@@ -117,7 +117,7 @@ int CharQueue::push(char* buffer)
 	//std::cout << "value_mutex_w is " << (value_mutex_w) << std::endl;
 	while (tag!=0 && head==tail)
 	{
-		std::cout << "sem_wait(sem_empty)" << std::endl;	
+		//std::cout << "sem_wait(sem_empty)" << std::endl;	
 		sem_wait(sem_empty);
 	}
 	sem_wait(sem_mutex);
@@ -151,7 +151,7 @@ int CharQueue::pop(char* buffer)
 
 	while (tag==0 && head==tail)
 	{
-		std::cout << "sem_wait(sem_full)" << std::endl;	
+		//std::cout << "sem_wait(sem_full)" << std::endl;	
 		sem_wait(sem_full);
 	}
 	sem_wait(sem_mutex);

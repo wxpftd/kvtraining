@@ -1,11 +1,14 @@
 #include <sstream>
 #include <sys/mman.h>
+#include <sys/shm.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <errno.h>
 #include <unistd.h>
 #include "processpool.h"
 #include <semaphore.h>
+#include "charqueue.h"
+#include <cstring>
 
 namespace mmtraining {
 
@@ -86,7 +89,9 @@ int Process::Kill() {
 	if (pid == 0)
 		exit(0);
 	else if (pid > 0)
-		return 0;		
+	{
+		return kill(pid, SIGKILL);
+	}
 	else
 	{
 		printf("pid is wrong.");	
@@ -156,54 +161,40 @@ int ProcessPool::WaitAll() {
 /////////////////////////////////////////////////TaskQueue
 
 TaskQueue::TaskQueue() {
-	if (0 != sem_init(&sem, 0, 0))
-	{
-		printf("sem_init failed.\n");	
-		exit(-1);
-	}
-	p_mutex = (pthread_mutex_t*)mmap(NULL, sizeof(pthread_mutex_t), PROT_WRITE|PROT_READ, MAP_SHARED|MAP_ANONYMOUS, -1, 0);	
-	if (MAP_FAILED == p_mutex)
-	{
-		printf("mmap init failed.\n");	
-		exit(-1);
-	}
-	if (0 != pthread_mutexattr_init(&attr))
-	{
-		printf("pthread_mutexattr_init() failed.\n");	
-		exit(-1);
-	}
-	if (0 != pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED))
-	{
-		printf("pthread_mutexattr_setpshared() failed.\n");	
-		exit(-1);
-	}
-	if (0 != pthread_mutex_init(p_mutex, &attr)) 
-	{
-		printf("pthread_mutex_init() failed.\n");	
-		exit(-1);
-	}
 }
     
 TaskQueue::~TaskQueue() {
-	pthread_mutexattr_destroy(&attr);
-	pthread_mutex_destroy(p_mutex);
 }
+
+int TaskQueue::init()
+{
+	tasks = (CharQueue*)mmap(NULL, sizeof(CharQueue), PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, -1, 0);
+	tasks->init();
+	return 0;
+	return -1;
+}
+
+int TaskQueue::destroy()
+{
+	tasks->destroy();
+	munmap(tasks, sizeof(CharQueue));
+	return 0;
+	return -1;
+}
+
     
 int TaskQueue::AddTask(Task& task) {
 	int ret = 0;
 	std::string buffer;
-	pthread_mutex_lock(p_mutex);
-	tasks.push_back(&task);				
 	ret = task.ToBuffer(buffer);
 	if (0 != ret)
 	{
 		printf("ToBuffer() failed.\n");	
 		return -1;
 	}
-	buffers.push_back(buffer);
-	pthread_mutex_unlock(p_mutex);
-	sem_post(&sem);
-	printf("AddTask().\n");
+	char transBuffer[MAX_CharSeries]{};
+	strcpy(transBuffer, buffer.c_str());
+	tasks->push(transBuffer);
 	if (0 == ret)
 		return 0;
 	else
@@ -211,23 +202,15 @@ int TaskQueue::AddTask(Task& task) {
 }
     
 int TaskQueue::GetTask(Task& task) {
-	std::string buffer;
+	char buffer[MAX_CharSeries];
 	int ret = 0;
-	while(tasks.empty()) 
+	if (tasks->pop(buffer) != 0)
 	{
-		printf("GetTask().\n");
-		sem_wait(&sem);
+		printf("tasks pop fail.\n");	
+		return -1;
 	}
-	pthread_mutex_lock(p_mutex);
-	if (!tasks.empty())
-	{
-		task = *(tasks.front());
-		tasks.pop_front();
-		buffer = buffers.front();
-		buffers.pop_front();
-		task.FromBuffer(buffer);
-	}
-	pthread_mutex_unlock(p_mutex);
+	std::string transBuffer(buffer);
+	task.FromBuffer(transBuffer);
 	if (0 == ret)
 		return 0;
 	else
@@ -236,23 +219,58 @@ int TaskQueue::GetTask(Task& task) {
 
 /////////////////////////////////////////////////Processor
 
-Processor::Processor(TaskQueue& queue, Task& tt) : taskQueue(queue), taskType(tt) {}
+Processor::Processor(TaskQueue& queue, Task& tt) : taskQueue(queue), taskType(tt) 
+{
+}
 
 Processor::~Processor() {
-	 
+}
+
+int Processor::init()
+{
+	return taskQueue.init();
+}
+
+int Processor::destroy()
+{
+	return taskQueue.destroy();
 }
 
 int Processor::Run() {
-	
-    return -1;
+	//sleep(5);
+	while (1)	
+	{
+		if (taskQueue.GetTask(taskType) != 0)
+		{
+			continue;
+		}
+		if (taskType.DoTask() != 0)
+		{
+			continue;
+		}
+	}
+    return 0;
+	return -1;
 }
 
 /////////////////////////////////////////////////TaskProcessPool
 
-TaskProcessPool::TaskProcessPool(Task& dummy) : processor(taskQueue, dummy) {}
+TaskProcessPool::TaskProcessPool(Task& dummy) : processor(taskQueue, dummy) 
+{
+}
 
-TaskProcessPool::~TaskProcessPool() {
- 
+TaskProcessPool::~TaskProcessPool()
+{
+}
+
+int TaskProcessPool::init()
+{
+	return processor.init();
+}
+
+int TaskProcessPool::destroy()
+{
+	return processor.destroy();
 }
 
 int TaskProcessPool::Start(int processCount) {
@@ -264,11 +282,11 @@ int TaskProcessPool::AddTask(Task& task) {
 }
 
 int TaskProcessPool::KillAll() {
-    return pool.KillAll();
+    
+	return pool.KillAll();
 }
 
 int TaskProcessPool::WaitAll() {
     return pool.WaitAll();
 }
-
 } // namespace mmtraining

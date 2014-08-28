@@ -1,0 +1,50 @@
+sem_wait(sem_full)
+sem_wait(sem_full)
+sem_wait(sem_full)
+pop
+head is 0, tail is 1, tag is 0
+äš»¿Ú9
+sem_wait(sem_full)
+pop
+head is 1, tail is 10, tag is 0
+äš»¿Ú9
+pop
+head is 2, tail is 10, tag is 0
+äš»¿Ú9
+pop
+head is 3, tail is 10, tag is 0
+äš»¿Ú9
+pop
+head is 4, tail is 10, tag is 0
+äš»¿Ú9
+pop
+head is 5, tail is 10, tag is 0
+äš»¿Ú9
+pop
+head is 6, tail is 10, tag is 0
+äš»¿Ú9
+pop
+head is 7, tail is 10, tag is 0
+äš»¿Ú9
+pop
+head is 8, tail is 10, tag is 0
+äš»¿Ú9
+pop
+head is 9, tail is 10, tag is 0
+äš»¿Ú9
+sem_wait(sem_full)
+sem_wait(sem_full)
+sem_wait(sem_full)
+sem_wait(sem_full)
+sem_wait(sem_full)
+sem_wait(sem_full)
+sem_wait(sem_full)
+sem_wait(sem_full)
+sem_wait(sem_full)
+sem_wait(sem_full)
+sem_wait(sem_full)
+sem_wait(sem_full)
+sem_wait(sem_full)
+sem_wait(sem_full)
+sem_wait(sem_full)
+sem_wait(sem_full)

@@ -77,50 +77,54 @@ public:
 	
 	int DoTask()
 	{
+		printf("pid is %d:",getpid());
 		cout << name_ << endl;
-		return 0;	
-		return -1;
+		return 0;
 	}
 
 	int ToBuffer(string &buffer)
 	{
-		stringstream ss(buffer);	
-		boost::archive::text_oarchive oa(ss);
-		oa << (*this);
+		buffer = name_;
+		//stringstream ss(buffer);	
+		//boost::archive::text_oarchive oa(ss);
+		//oa << (*this);
 		return 0;
 		return -1;	
 	}
 
 	int FromBuffer(string &buffer)
 	{
-		stringstream ss(buffer);
-		boost::archive::text_iarchive ia(ss);
-		ia >> (*this);
+		this->name_ = buffer;
+		//stringstream ss(buffer);
+		//boost::archive::text_iarchive ia(ss);
+		//ia >> (*this);
 		return 0;
 		return -1;		
 	}
 
 private:
-	friend class boost::serialization::access;
-	template<typename Archive>
-	void serialize(Archive &ar, const unsigned int version)
-	{
-		ar & name_;	
-	}
+	//friend class boost::serialization::access;
+	//template<typename Archive>
+	//void serialize(Archive &ar, const unsigned int version)
+	//{
+	//	ar & name_;	
+	//}
 	string name_;
 };
 
 int main()
 {
 	MyTask *myTask = new MyTask("Main Functon.");
-	TaskProcessPool tpp(*myTask);
-	tpp.Start(10);
-	for (int i=0; i<10; i++)
-		tpp.AddTask(*myTask);
-	//MyRun *myRun = new MyRun();
-	//pp.Start(220, *myRun);
-	//cout << "pp.KillAll():" <<  pp.KillAll() << endl;
-	cout << "pp.WaitAll():" <<  tpp.WaitAll() << endl;
+	TaskProcessPool *tpp = new TaskProcessPool(*myTask);
+	tpp->init();
+	tpp->Start(200);
+	for (int i=0; i<100000; i++)
+		tpp->AddTask(*myTask);
+	sleep(5);
+	cout << "pp.KillAll():" <<  tpp->KillAll() << endl;
+	cout << "pp.WaitAll():" <<  tpp->WaitAll() << endl;
+	tpp->destroy();	
 	delete myTask;
+	delete tpp;
 	return 0;
 }
