@@ -15,6 +15,10 @@ int main()
 	string clientBuffer{"this is client."};
 	oneClient.Connect("127.0.0.1", 6666);
 	oneClient.WriteLine(clientBuffer);
+
+	oneClient.ReadAll(clientBuffer);
+	cout << clientBuffer;
+	
 	return 0;
 }
 

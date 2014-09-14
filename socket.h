@@ -3,6 +3,7 @@
 #define MM_TRAINING_SOCKET_H
 
 #include <string>
+#include <memory>
 
 namespace mmtraining {
 
@@ -54,6 +55,12 @@ public:
      * @return -1: 接收失败, 其他: 接收字节数
      */
     int ReadLine(std::string& line);
+
+	/**
+	 * 接受所有服务端传过来的所有数据
+	 * @return -1: 接受失败, 其他: 接受字节
+	 */
+	int ReadAll(std::string& lines);
     
     /**
      * 关闭连接
@@ -88,7 +95,7 @@ public:
     /**
      * accept 新连接
      */
-    ClientSocket* Accept();
+	std::shared_ptr<ClientSocket> Accept();
     
 private:
     int fd;

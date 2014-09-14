@@ -1,3 +1,4 @@
+#include <memory>
 #include <iostream>
 #include <unistd.h>
 #include <cstdio>
@@ -24,6 +25,7 @@ ClientSocket::ClientSocket(int fd) {
 
 ClientSocket::~ClientSocket() {
 	close(fd);
+	//setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, NULL, 0);
     // TODO: 释放资源
 }
     
@@ -58,19 +60,19 @@ int ClientSocket::Connect(const char* ip, unsigned short port) {
 int ClientSocket::Write(const void* buffer, int bufferSize) {
     // TODO: 完成代码
 	
-	printf("write msg: \n");
+	//printf("write msg\n");
 	if (write(fd, buffer, bufferSize) < 0)	
 	{
 		printf("write msg error: %s(errno: %d)\n", strerror(errno), errno);	
 		return -1;
 	}
-    return 0;
+    return bufferSize;
 }
 
 int ClientSocket::WriteLine(const std::string& line) {
     // TODO: 完成代码
 	
-	printf("writeLine msg: \n");
+	//printf("writeLine msg\n");
 	if (write(fd, line.c_str(), line.length()) < 0)
 	{
 		printf("writeLine msg error: %s(errno: %d)\n", strerror(errno), errno);	
@@ -85,26 +87,27 @@ int ClientSocket::WriteLine(const std::string& line) {
 			return -1;
 		}
 	}
-    return 0;
+    return line.length();
 }
 
 int ClientSocket::Read(void* buffer, int bufferSize) {
     // TODO: 完成代码
 	
-	printf("read msg:\n");
-	if (read(fd ,buffer, bufferSize) < 0)
+	//printf("read msg\n");
+	int length(0);
+	if ((length = read(fd ,buffer, bufferSize)) < 0)
 	{
 		printf("read msg error: %s(errno: %d)\n", strerror(errno), errno);		
 		return -1;
 	}
-	return 0;
+	return length;
 }
 
 
 int ClientSocket::ReadLine(std::string& line) {
 	// TODO: 完成代码
 	
-	printf("read msg:\n");
+	//printf("readline msg\n");
 	char buffer[4096];
 	int k = 0;
 	do 
@@ -115,15 +118,26 @@ int ClientSocket::ReadLine(std::string& line) {
 			printf("readLine failed.\n");	
 			return -1;
 		}
+		buffer[k++] = c;
 		if (c == '\0')
 			break;
 		if (c == '\n')
 			break;
-		buffer[k++] = c;
 	} while (1);
 	line = buffer;	
 
-	return 0;
+	return k;
+}
+
+int ClientSocket::ReadAll(std::string& lines)
+{
+	//printf("readall msg\n");
+	std::string line;
+	while ((ReadLine(line)) > 1)
+	{
+		lines.append(line);	
+	}
+	return lines.length();
 }
 
 int ClientSocket::Close() {
@@ -139,6 +153,7 @@ ServerSocket::ServerSocket() : fd(-1) {
 }
 
 ServerSocket::~ServerSocket() {
+	//setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, NULL, 0);
 	close(fd);
     // TODO: 释放资源
 }
@@ -179,7 +194,7 @@ int ServerSocket::Listen(const char* ip, unsigned short port) {
     return -1;
 }
 
-ClientSocket* ServerSocket::Accept() {
+std::shared_ptr<ClientSocket> ServerSocket::Accept() {
     // TODO: 完成代码
 	int connfd;
 	sockaddr_in clientaddr;
@@ -191,7 +206,7 @@ ClientSocket* ServerSocket::Accept() {
 		return NULL;
 	}
 	printf("Client's IP:%s:%d\n", inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port));
-	return new ClientSocket(connfd);
+	return std::make_shared<ClientSocket>(connfd);
 }
 
 } // namespace mmtraining

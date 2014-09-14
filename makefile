@@ -6,11 +6,9 @@
 
 install: a.out b.out
 
-a.out: main.cpp socket.h socket.cpp
-	g++ -Wall -std=c++11 -o a.out main.cpp socket.h socket.cpp
+a.out: main.cpp echoser.h echoser.cpp socket.h socket.cpp
+	g++ -Wall -std=c++11 -o a.out main.cpp echoser.h echoser.cpp socket.h socket.cpp
 
-b.out: clientMain.cpp socket.h socket.cpp
-	g++ -Wall -std=c++11 -o b.out clientMain.cpp socket.h socket.cpp
 
 
 
