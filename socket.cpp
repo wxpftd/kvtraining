@@ -12,6 +12,7 @@
 #include <string>
 #include <cstring>
 #include "socket.h"
+#include <pthread.h>
 
 namespace mmtraining {
 
@@ -21,6 +22,11 @@ ClientSocket::ClientSocket() : fd(-1) {}
     
 ClientSocket::ClientSocket(int fd) {
     this->fd = fd;
+	if (pthread_mutex_init(&mutex, NULL) != 0)
+	{
+		printf("pthread_mutex_init fail.\n");
+		exit(-1);
+	}
 }
 
 ClientSocket::~ClientSocket() {
@@ -32,6 +38,7 @@ ClientSocket::~ClientSocket() {
 int ClientSocket::Connect(const char* ip, unsigned short port) {
     // TODO: 完成代码
 	
+	pthread_mutex_lock(&mutex);	
 	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1)	
 	{
 		printf("Client socket() failed.\n");
@@ -53,6 +60,7 @@ int ClientSocket::Connect(const char* ip, unsigned short port) {
 		printf("connect error: %s(errno: %d)\n", strerror(errno), errno);	
 		return -1;
 	}
+	pthread_mutex_unlock(&mutex);	
 	
     return 0;
 }
@@ -60,18 +68,21 @@ int ClientSocket::Connect(const char* ip, unsigned short port) {
 int ClientSocket::Write(const void* buffer, int bufferSize) {
     // TODO: 完成代码
 	
+	pthread_mutex_lock(&mutex);
 	//printf("write msg\n");
 	if (write(fd, buffer, bufferSize) < 0)	
 	{
 		printf("write msg error: %s(errno: %d)\n", strerror(errno), errno);	
 		return -1;
 	}
+	pthread_mutex_unlock(&mutex);
     return bufferSize;
 }
 
 int ClientSocket::WriteLine(const std::string& line) {
     // TODO: 完成代码
 	
+	pthread_mutex_lock(&mutex);
 	//printf("writeLine msg\n");
 	if (write(fd, line.c_str(), line.length()) < 0)
 	{
@@ -87,12 +98,14 @@ int ClientSocket::WriteLine(const std::string& line) {
 			return -1;
 		}
 	}
+	pthread_mutex_unlock(&mutex);
     return line.length();
 }
 
 int ClientSocket::Read(void* buffer, int bufferSize) {
     // TODO: 完成代码
 	
+	pthread_mutex_lock(&mutex);
 	//printf("read msg\n");
 	int length(0);
 	if ((length = read(fd ,buffer, bufferSize)) < 0)
@@ -100,6 +113,7 @@ int ClientSocket::Read(void* buffer, int bufferSize) {
 		printf("read msg error: %s(errno: %d)\n", strerror(errno), errno);		
 		return -1;
 	}
+	pthread_mutex_unlock(&mutex);
 	return length;
 }
 
@@ -107,7 +121,8 @@ int ClientSocket::Read(void* buffer, int bufferSize) {
 int ClientSocket::ReadLine(std::string& line) {
 	// TODO: 完成代码
 	
-	//printf("readline msg\n");
+	pthread_mutex_lock(&mutex);
+	printf("readline msg\n");
 	char buffer[4096];
 	int k = 0;
 	do 
@@ -125,18 +140,21 @@ int ClientSocket::ReadLine(std::string& line) {
 			break;
 	} while (1);
 	line = buffer;	
+	pthread_mutex_unlock(&mutex);
 
 	return k;
 }
 
 int ClientSocket::ReadAll(std::string& lines)
 {
+	pthread_mutex_lock(&mutex);
 	//printf("readall msg\n");
 	std::string line;
 	while ((ReadLine(line)) > 1)
 	{
 		lines.append(line);	
 	}
+	pthread_mutex_unlock(&mutex);
 	return lines.length();
 }
 
@@ -150,6 +168,11 @@ int ClientSocket::Close() {
 
 ServerSocket::ServerSocket() : fd(-1) {
     // TODO: 完成代码
+	if (pthread_mutex_init(&mutex, NULL) != 0)
+	{
+		printf("pthread_mutex_init fail.\n");
+		exit(-1);
+	}
 }
 
 ServerSocket::~ServerSocket() {
@@ -196,6 +219,8 @@ int ServerSocket::Listen(const char* ip, unsigned short port) {
 
 std::shared_ptr<ClientSocket> ServerSocket::Accept() {
     // TODO: 完成代码
+
+	pthread_mutex_lock(&mutex);	
 	int connfd;
 	sockaddr_in clientaddr;
 	socklen_t addrlen = sizeof(clientaddr);
@@ -206,6 +231,7 @@ std::shared_ptr<ClientSocket> ServerSocket::Accept() {
 		return NULL;
 	}
 	printf("Client's IP:%s:%d\n", inet_ntoa(clientaddr.sin_addr), ntohs(clientaddr.sin_port));
+	pthread_mutex_unlock(&mutex);
 	return std::make_shared<ClientSocket>(connfd);
 }
 

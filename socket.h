@@ -4,6 +4,7 @@
 
 #include <string>
 #include <memory>
+#include <pthread.h>
 
 namespace mmtraining {
 
@@ -68,7 +69,7 @@ public:
     int Close();
     
 private:
-    
+	pthread_mutex_t mutex;
     int fd;
 };
 
@@ -99,6 +100,7 @@ public:
     
 private:
     int fd;
+	pthread_mutex_t mutex;
 };
 
 } // namespace mmtraining

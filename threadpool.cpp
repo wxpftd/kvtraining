@@ -238,23 +238,26 @@ namespace mmtraining {
 		while (!workQueue.IsShutdown())
 		{
 			pthread_mutex_lock(&mutex);
+			//printf("GetWork in worker.\n");
 			Work* oneWork = workQueue.GetWork();
 			pthread_mutex_unlock(&mutex);
 			if (oneWork != NULL)
+			{
 				if (!oneWork->NeedDelete())
 				{
 					if(oneWork->DoWork() != 0)
 					{
 						// Dowork fails.
-						delete oneWork;
+						//delete oneWork;
 						return -1;
 					}
-					else
+					//else
 						// Dowork successful.
-						delete oneWork;
+						//delete oneWork;
 				}
-				else
-					delete oneWork;
+				//else
+					//delete oneWork;
+			}
 		}
 		pthread_exit(NULL);
 		return 0;

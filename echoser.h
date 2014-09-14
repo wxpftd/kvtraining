@@ -2,19 +2,22 @@
 #define __ECHO_H__
 
 #include "socket.h"
-#include "runnable.h"
+#include "threadpool.h"
+#include <pthread.h>
 
 namespace mmtraining {
-	class EchoSer : public Runnable
+	class EchoSer : public Work
 	{
 		public:
 			EchoSer();
 			~EchoSer();
 			int init();
 			int destroy();
-			int Run(); 	
+			bool NeedDelete() const;
+			int DoWork();
 		private:
 			ServerSocket *server;
+			pthread_mutex_t mutex;
 	};
 }
 
