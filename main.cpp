@@ -15,7 +15,7 @@ int main()
 
 	WorkerThreadPool *wtp = new	WorkerThreadPool();
 	wtp->Start(100);	
-	for (int i = 0; i < 2; i++)
+	for (int i = 0; i < 3; i++)
 	{
 		//printf("Add work:%d\n", i);
 		wtp->AddWork(echoser);		

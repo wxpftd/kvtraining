@@ -84,15 +84,13 @@ int ClientSocket::WriteLine(const std::string& line) {
 	
 	pthread_mutex_lock(&mutex);
 	//printf("writeLine msg\n");
-	if (write(fd, line.c_str(), line.length()) < 0)
-	{
-		printf("writeLine msg error: %s(errno: %d)\n", strerror(errno), errno);	
-		return -1;
-	}
+
 	char c = '\n';
 	if (line[line.length() - 1] != c)
 	{
-		if (Write(&c, 1) < 0)	
+		std::string buffer = line.c_str();
+		buffer.append("\n");
+		if (write(fd, buffer.c_str(), buffer.length()) < 0)
 		{
 			printf("writeLine msg error: %s(errno: %d)\n", strerror(errno), errno);	
 			return -1;
@@ -122,7 +120,7 @@ int ClientSocket::ReadLine(std::string& line) {
 	// TODO: Íê³É´úÂë
 	
 	pthread_mutex_lock(&mutex);
-	printf("readline msg\n");
+	//printf("readline msg\n");
 	char buffer[4096];
 	int k = 0;
 	do 
@@ -135,7 +133,10 @@ int ClientSocket::ReadLine(std::string& line) {
 		}
 		buffer[k++] = c;
 		if (c == '\0')
+		{
+			k--;	
 			break;
+		}
 		if (c == '\n')
 			break;
 	} while (1);
@@ -150,7 +151,7 @@ int ClientSocket::ReadAll(std::string& lines)
 	pthread_mutex_lock(&mutex);
 	//printf("readall msg\n");
 	std::string line;
-	while ((ReadLine(line)) > 1)
+	while ((ReadLine(line)) > 0)
 	{
 		lines.append(line);	
 	}

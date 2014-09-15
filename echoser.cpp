@@ -4,22 +4,22 @@
 #include "socket.h"
 #include "threadpool.h"
 #include <pthread.h>
+#include <cstring>
 
 namespace mmtraining {
 	EchoSer::EchoSer()
 	{
-		if (pthread_mutex_init(&mutex, NULL) < 0)
-		{
-			printf("pthread_mutex_init fail.\n");	
-			exit(-1);
-		}
+		//if (pthread_mutex_init(&mutex, NULL) < 0)
+		//{
+		//	printf("pthread_mutex_init fail.\n");	
+		//	exit(-1);
+		//}
 	}
 
 	EchoSer::~EchoSer()
 	{
 
 	}		
-
 
 	int EchoSer::init()
 	{
@@ -36,13 +36,17 @@ namespace mmtraining {
 
 	int EchoSer::DoWork()
 	{
-		pthread_mutex_lock(&mutex);
 		std::shared_ptr<ClientSocket> serverClient = server->Accept();	
-		std::string buffer;
-		serverClient->ReadLine(buffer);
-		printf("%s", buffer.c_str());
-		pthread_mutex_unlock(&mutex);
-		printf("DoWork in EchoSer\n");
+		//pthread_mutex_lock(&mutex);
+		char buffer[4096]{};
+		while(strcmp(buffer, "exit\n"))	
+		{
+			memset(buffer, '\0', sizeof(buffer));
+			serverClient->Read(buffer, 4096);
+			printf("%s", buffer);
+		}
+		//pthread_mutex_unlock(&mutex);
+		//printf("DoWork in EchoSer\n");
 		return 0;
 	}
 
@@ -50,7 +54,5 @@ namespace mmtraining {
 	{
 		return false;	
 	}
-
-
 
 }
